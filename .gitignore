@@ -33,3 +33,4 @@ Thumbs.db
 
 # Debugging
 __debug_bin*
+go-test
