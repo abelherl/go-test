@@ -1,23 +1,24 @@
 package main
 
 import (
+	"github.com/abelherl/go-test/controllers"
+	"github.com/abelherl/go-test/initializers"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func init() {
-	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		panic("Error loading .env file")
-	}
+	initializers.LoadEnvVariables()
+	initializers.ConnectToDb()
 }
 
 func main() {
 	router := gin.Default()
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+
+	router.POST("/posts", controllers.PostsCreate)
+	router.GET("/posts", controllers.PostsIndex)
+	router.GET("/posts/:id", controllers.PostsShow)
+	router.PUT("/posts/:id", controllers.PostsUpdate)
+	router.DELETE("/posts/:id", controllers.PostsDelete)
+
 	router.Run()
 }
