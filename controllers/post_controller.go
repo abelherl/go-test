@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
@@ -33,7 +34,7 @@ func PostsCreate(c *gin.Context) {
 
 func PostsIndex(c *gin.Context) {
 	// Parse query params with default values
-	page, limit := getPaginationParams(c)
+	page, limit, search := getIndexParams(c)
 
 	if page <= 0 || limit <= 0 {
 		c.JSON(400, gin.H{"error": "Invalid pagination params"})
@@ -46,13 +47,21 @@ func PostsIndex(c *gin.Context) {
 	var posts []models.Post
 	var total int64
 
-	// Count total records
-	initializers.DB.Model(&models.Post{}).Count(&total)
+	// Initialize the query
+	query := initializers.DB.Model(&models.Post{})
+
+	// Apply search filter if provided
+	if search != "" {
+		query = query.Where("COALESCE(Title, '') ILIKE ? OR COALESCE(Body, '') ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	// Count total filtered records
+	query.Count(&total)
 	totalPages := (total + int64(limit) - 1) / int64(limit)
 	isLast := page >= int(totalPages)
 
-	// Fetch paginated results
-	initializers.DB.
+	// Fetch paginated filtered results
+	query.
 		Limit(limit).
 		Offset(offset).
 		Find(&posts)
@@ -134,9 +143,10 @@ func PostsDelete(c *gin.Context) {
 	})
 }
 
-func getPaginationParams(c *gin.Context) (page int, limit int) {
+func getIndexParams(c *gin.Context) (page int, limit int, search string) {
 	page = 1
 	limit = 20
+	search = strings.TrimSpace(c.Query("search"))
 
 	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
 		page = p
