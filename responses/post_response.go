@@ -19,13 +19,21 @@ func NewPostResponse(p models.Post) PostResponse {
 	}
 }
 
+func NewPostResponseList(posts []models.Post) []PostResponse {
+	responses := make([]PostResponse, 0, len(posts))
+	for _, post := range posts {
+		responses = append(responses, NewPostResponse(post))
+	}
+	return responses
+}
+
 func PostToJSON(post PostResponse) gin.H {
 	return gin.H{
 		"data": post,
 	}
 }
 
-func PostToJSONs(posts []PostResponse) gin.H {
+func PostToJSONList(posts []PostResponse) gin.H {
 	return gin.H{
 		"data": posts,
 	}

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/responses"
@@ -30,21 +32,41 @@ func PostsCreate(c *gin.Context) {
 }
 
 func PostsIndex(c *gin.Context) {
-	// Get all posts from the database
-	var posts []models.Post
-	result := initializers.DB.Find(&posts)
+	// Parse query params with default values
+	page, limit := getPaginationParams(c)
 
-	if result.Error != nil {
-		c.Status(400)
+	if page <= 0 || limit <= 0 {
+		c.JSON(400, gin.H{"error": "Invalid pagination params"})
 		return
 	}
 
-	// Return the posts as a JSON response
-	var postResponses []responses.PostResponse
-	for _, post := range posts {
-		postResponses = append(postResponses, responses.NewPostResponse(post))
-	}
-	c.JSON(200, responses.PostToJSONs(postResponses))
+	// Calculate offset
+	offset := (page - 1) * limit
+
+	var posts []models.Post
+	var total int64
+
+	// Count total records
+	initializers.DB.Model(&models.Post{}).Count(&total)
+	totalPages := (total + int64(limit) - 1) / int64(limit)
+	isLast := page >= int(totalPages)
+
+	// Fetch paginated results
+	initializers.DB.
+		Limit(limit).
+		Offset(offset).
+		Find(&posts)
+
+	postResponses := responses.NewPostResponseList(posts)
+
+	c.JSON(200, gin.H{
+		"data":       postResponses,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": totalPages,
+		"isLast":     isLast,
+	})
 }
 
 func PostsShow(c *gin.Context) {
@@ -110,4 +132,19 @@ func PostsDelete(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Post deleted successfully",
 	})
+}
+
+func getPaginationParams(c *gin.Context) (page int, limit int) {
+	page = 1
+	limit = 20
+
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	if l, err := strconv.Atoi(c.Query("limit")); err == nil && l > 0 {
+		limit = l
+	}
+
+	return
 }
