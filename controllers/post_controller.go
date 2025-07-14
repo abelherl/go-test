@@ -52,7 +52,7 @@ func PostsIndex(c *gin.Context) {
 
 	// Apply search filter if provided
 	if search != "" {
-		query = query.Where("COALESCE(Title, '') ILIKE ? OR COALESCE(Body, '') ILIKE ?", "%"+search+"%", "%"+search+"%")
+		query = query.Where("COALESCE(title, '') ILIKE ? OR COALESCE(body, '') ILIKE ?", "%"+search+"%", "%"+search+"%")
 	}
 
 	// Count total filtered records
