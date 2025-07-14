@@ -24,7 +24,7 @@ func PostsCreate(c *gin.Context) {
 	result := initializers.DB.Create(&post)
 
 	if result.Error != nil {
-		c.Status(400)
+		c.JSON(400, gin.H{"error": "Failed to create post"})
 		return
 	}
 

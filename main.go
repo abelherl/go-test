@@ -20,5 +20,11 @@ func main() {
 	router.PUT("/posts/:id", controllers.PostsUpdate)
 	router.DELETE("/posts/:id", controllers.PostsDelete)
 
+	router.POST("/users", controllers.UserCreate)
+	router.GET("/users", controllers.UserIndex)
+	router.GET("/users/:id", controllers.UserShow)
+	router.PUT("/users/:id", controllers.UserUpdate)
+	router.DELETE("/users/:id", controllers.UserDelete)
+
 	router.Run()
 }
