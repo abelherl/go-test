@@ -83,6 +83,18 @@ func UserShow(c *gin.Context) {
 	c.JSON(200, responses.UserToJSON(user))
 }
 
+func UserShowByEmail(c *gin.Context, email string) (*models.User, error) {
+	// Find user by email in the database
+	var user models.User
+	result := initializers.DB.Where("email = ?", email).First(&user)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &user, nil
+}
+
 func UserUpdate(c *gin.Context) {
 	// Get user ID from URL
 	id := c.Param("id")

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/abelherl/go-test/controllers"
 	"github.com/abelherl/go-test/initializers"
+	"github.com/abelherl/go-test/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,17 +15,27 @@ func init() {
 func main() {
 	router := gin.Default()
 
-	router.POST("/posts", controllers.PostsCreate)
-	router.GET("/posts", controllers.PostsIndex)
-	router.GET("/posts/:id", controllers.PostsShow)
-	router.PUT("/posts/:id", controllers.PostsUpdate)
-	router.DELETE("/posts/:id", controllers.PostsDelete)
-
+	// Public routes
+	router.POST("/auth/login", controllers.AuthLogin)
 	router.POST("/users", controllers.UserCreate)
-	router.GET("/users", controllers.UserIndex)
-	router.GET("/users/:id", controllers.UserShow)
-	router.PUT("/users/:id", controllers.UserUpdate)
-	router.DELETE("/users/:id", controllers.UserDelete)
+
+	// Protected routes
+	protected := router.Group("/")
+	protected.Use(middleware.RequireAuth)
+	{
+		// Posts
+		protected.POST("/posts", controllers.PostsCreate)
+		protected.GET("/posts", controllers.PostsIndex)
+		protected.GET("/posts/:id", controllers.PostsShow)
+		protected.PUT("/posts/:id", controllers.PostsUpdate)
+		protected.DELETE("/posts/:id", controllers.PostsDelete)
+
+		// Users
+		protected.GET("/users", controllers.UserIndex)
+		protected.GET("/users/:id", controllers.UserShow)
+		protected.PUT("/users/:id", controllers.UserUpdate)
+		protected.DELETE("/users/:id", controllers.UserDelete)
+	}
 
 	router.Run()
 }
