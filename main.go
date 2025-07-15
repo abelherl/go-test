@@ -11,6 +11,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDb()
+	initializers.InitCloudinary()
 }
 
 func main() {
