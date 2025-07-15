@@ -19,8 +19,8 @@ func getLimiter(ip string) *rate.Limiter {
 
 	limiter, exists := limiters[ip]
 	if !exists {
-		// 5 requests per minute with burst size of 2
-		limiter = rate.NewLimiter(5.0/60.0, 2)
+		// 5 requests per minute with burst size of 5
+		limiter = rate.NewLimiter(5.0/60.0, 5)
 		limiters[ip] = limiter
 	}
 
