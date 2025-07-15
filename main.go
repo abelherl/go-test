@@ -14,6 +14,9 @@ func init() {
 
 func main() {
 	router := gin.Default()
+	router.Use(gin.Recovery())
+	router.Use(middleware.Logger())
+	router.Use(middleware.RateLimiter())
 
 	// Public routes
 	router.POST("/auth/login", controllers.AuthLogin)
