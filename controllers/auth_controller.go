@@ -6,7 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthLogin(c *gin.Context) {
+type AuthController struct {
+	UserService *services.UserService
+}
+
+func NewAuthController(userService *services.UserService) *AuthController {
+	return &AuthController{UserService: userService}
+}
+
+func (ac *AuthController) AuthLogin(c *gin.Context) {
 	var body struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -17,7 +25,7 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	user, err := services.GetUserByEmail(body.Email)
+	user, err := ac.UserService.GetUserByEmail(body.Email)
 	passErr := !helpers.CheckPassword(body.Password, user.Password)
 
 	if err != nil || passErr {

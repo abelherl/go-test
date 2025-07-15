@@ -4,6 +4,7 @@ import (
 	"github.com/abelherl/go-test/controllers"
 	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/middleware"
+	"github.com/abelherl/go-test/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,31 +14,41 @@ func init() {
 }
 
 func main() {
+	// Initialize dependencies
+	db := initializers.DB
+
+	userService := services.NewUserService(db)
+
+	authController := controllers.NewAuthController(userService)
+	postController := controllers.NewPostController(db)
+	userController := controllers.NewUserController(db)
+
+	// Set up Gin router
 	router := gin.Default()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logger())
 	router.Use(middleware.RateLimiter())
 
 	// Public routes
-	router.POST("/auth/login", controllers.AuthLogin)
-	router.POST("/users", controllers.UserCreate)
+	router.POST("/auth/login", authController.AuthLogin)
+	router.POST("/users", userController.UserCreate)
 
 	// Protected routes
 	protected := router.Group("/")
 	protected.Use(middleware.RequireAuth)
 	{
 		// Posts
-		protected.POST("/posts", controllers.PostsCreate)
-		protected.GET("/posts", controllers.PostsIndex)
-		protected.GET("/posts/:id", controllers.PostsShow)
-		protected.PUT("/posts/:id", controllers.PostsUpdate)
-		protected.DELETE("/posts/:id", controllers.PostsDelete)
+		protected.POST("/posts", postController.PostsCreate)
+		protected.GET("/posts", postController.PostsIndex)
+		protected.GET("/posts/:id", postController.PostsShow)
+		protected.PUT("/posts/:id", postController.PostsUpdate)
+		protected.DELETE("/posts/:id", postController.PostsDelete)
 
 		// Users
-		protected.GET("/users", controllers.UserIndex)
-		protected.GET("/users/:id", controllers.UserShow)
-		protected.PUT("/users/:id", controllers.UserUpdate)
-		protected.DELETE("/users/:id", controllers.UserDelete)
+		protected.GET("/users", userController.UserIndex)
+		protected.GET("/users/:id", userController.UserShow)
+		protected.PUT("/users/:id", userController.UserUpdate)
+		protected.DELETE("/users/:id", userController.UserDelete)
 	}
 
 	router.Run()

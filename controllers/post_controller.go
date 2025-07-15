@@ -4,13 +4,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/responses"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func PostsCreate(c *gin.Context) {
+type PostController struct {
+	DB *gorm.DB
+}
+
+func NewPostController(db *gorm.DB) *PostController {
+	return &PostController{DB: db}
+}
+
+func (pc PostController) PostsCreate(c *gin.Context) {
 	// Get data from request body
 	var body struct {
 		Body  string `json:"body"`
@@ -21,7 +29,7 @@ func PostsCreate(c *gin.Context) {
 
 	// Create a new post in the database
 	post := models.Post{Title: body.Title, Body: body.Body}
-	result := initializers.DB.Create(&post)
+	result := pc.DB.Create(&post)
 
 	if result.Error != nil {
 		c.JSON(400, gin.H{"error": "Failed to create post"})
@@ -32,9 +40,9 @@ func PostsCreate(c *gin.Context) {
 	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
 }
 
-func PostsIndex(c *gin.Context) {
+func (pc PostController) PostsIndex(c *gin.Context) {
 	// Parse query params with default values
-	page, limit, search := getIndexParams(c)
+	page, limit, search := pc.getIndexParams(c)
 
 	if page <= 0 || limit <= 0 {
 		c.JSON(400, gin.H{"error": "Invalid pagination params"})
@@ -48,7 +56,7 @@ func PostsIndex(c *gin.Context) {
 	var total int64
 
 	// Initialize the query
-	query := initializers.DB.Model(&models.Post{})
+	query := pc.DB.Model(&models.Post{})
 
 	// Apply search filter if provided
 	if search != "" {
@@ -78,13 +86,13 @@ func PostsIndex(c *gin.Context) {
 	})
 }
 
-func PostsShow(c *gin.Context) {
+func (pc PostController) PostsShow(c *gin.Context) {
 	// Get the post ID from the URL parameters
 	id := c.Param("id")
 
 	// Find the post in the database
 	var post models.Post
-	result := initializers.DB.First(&post, id)
+	result := pc.DB.First(&post, id)
 
 	if result.Error != nil {
 		c.Status(404)
@@ -95,7 +103,7 @@ func PostsShow(c *gin.Context) {
 	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
 }
 
-func PostsUpdate(c *gin.Context) {
+func (pc PostController) PostsUpdate(c *gin.Context) {
 	// Get the post ID from the URL parameters
 	id := c.Param("id")
 
@@ -109,7 +117,7 @@ func PostsUpdate(c *gin.Context) {
 
 	// Update the post in the database
 	var post models.Post
-	result := initializers.DB.First(&post, id)
+	result := pc.DB.First(&post, id)
 
 	if result.Error != nil {
 		c.Status(404)
@@ -119,18 +127,18 @@ func PostsUpdate(c *gin.Context) {
 	post.Title = body.Title
 	post.Body = body.Body
 
-	initializers.DB.Save(&post)
+	pc.DB.Save(&post)
 
 	// Return the updated post as a JSON response
 	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
 }
 
-func PostsDelete(c *gin.Context) {
+func (pc PostController) PostsDelete(c *gin.Context) {
 	// Get the post ID from the URL parameters
 	id := c.Param("id")
 
 	// Delete the post from the database
-	result := initializers.DB.Delete(&models.Post{}, id)
+	result := pc.DB.Delete(&models.Post{}, id)
 
 	if result.Error != nil {
 		c.Status(404)
@@ -143,7 +151,7 @@ func PostsDelete(c *gin.Context) {
 	})
 }
 
-func getIndexParams(c *gin.Context) (page int, limit int, search string) {
+func (pc PostController) getIndexParams(c *gin.Context) (page int, limit int, search string) {
 	page = 1
 	limit = 20
 	search = strings.TrimSpace(c.Query("search"))
