@@ -70,15 +70,6 @@ func (uc *UserController) UserShow(c *gin.Context) {
 	c.JSON(200, responses.UserToJSON(user))
 }
 
-func (uc *UserController) UserShowByEmail(email string) (*models.User, error) {
-	var user models.User
-	result := uc.DB.Where("email = ?", email).First(&user)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &user, nil
-}
-
 func (uc *UserController) UserUpdate(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
