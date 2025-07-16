@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/responses"
 	"github.com/gin-gonic/gin"
@@ -129,8 +130,11 @@ func (pc PostController) PostsUpdate(c *gin.Context) {
 
 	pc.DB.Save(&post)
 
+	var updatedPost models.Post
+	pc.DB.First(&updatedPost, id)
+
 	// Return the updated post as a JSON response
-	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(updatedPost)))
 }
 
 func (pc PostController) PostsDelete(c *gin.Context) {
@@ -149,6 +153,47 @@ func (pc PostController) PostsDelete(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Post deleted successfully",
 	})
+}
+
+func (pc PostController) PostsUploadAttachments(c *gin.Context) {
+	id := c.Param("id")
+
+	var post models.Post
+	result := pc.DB.First(&post, id)
+	if result.Error != nil {
+		c.JSON(400, gin.H{"error": "Failed to get post data"})
+		return
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to parse form data"})
+		return
+	}
+
+	files := form.File["attachments"]
+	if len(files) == 0 {
+		c.JSON(400, gin.H{"error": "No attachments provided"})
+		return
+	} else if len(files) > 5 {
+		c.JSON(400, gin.H{"error": "Maximum 5 attachments allowed"})
+		return
+	}
+
+	for i, file := range files {
+		index := strconv.Itoa(i)
+		fileName := "post_" + id + "_" + index
+		url, err := initializers.UploadImage(c.Request.Context(), file, fileName, "post_attachments")
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to upload attachment"})
+			return
+		}
+		post.Attachments = append(post.Attachments, url)
+	}
+
+	pc.DB.Save(&post)
+
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
 }
 
 func (pc PostController) getIndexParams(c *gin.Context) (page int, limit int, search string) {

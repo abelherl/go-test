@@ -34,24 +34,27 @@ func main() {
 	router.POST("/auth/login", authController.AuthLogin)
 	router.POST("/users", userController.UserCreate)
 
-	// Protected routes
-	protected := router.Group("/")
-	protected.Use(middleware.RequireAuth)
-	{
-		// Posts
-		protected.POST("/posts", postController.PostsCreate)
-		protected.GET("/posts", postController.PostsIndex)
-		protected.GET("/posts/:id", postController.PostsShow)
-		protected.PUT("/posts/:id", postController.PostsUpdate)
-		protected.DELETE("/posts/:id", postController.PostsDelete)
+	// Routes with general authentication check
+	authGroup := router.Group("/")
+	authGroup.Use(middleware.RequireAuth)
 
-		// Users
-		protected.GET("/users", userController.UserIndex)
-		protected.GET("/users/:id", userController.UserShow)
-		protected.PUT("/users/:id", userController.UserUpdate)
-		protected.PUT("/users/:id/upload-profile-photo", userController.UserUploadProfilePhoto)
-		protected.DELETE("/users/:id", userController.UserDelete)
-	}
+	authGroup.POST("/posts", postController.PostsCreate)
+	authGroup.GET("/posts", postController.PostsIndex)
+	authGroup.GET("/posts/:id", postController.PostsShow)
+	authGroup.PUT("/posts/:id", postController.PostsUpdate)
+	authGroup.PUT("/posts/:id/upload-attachments", postController.PostsUploadAttachments)
+	authGroup.DELETE("/posts/:id", postController.PostsDelete)
+
+	authGroup.GET("/users", userController.UserIndex)
+	authGroup.GET("/users/:id", userController.UserShow)
+
+	// Routes with same user authentication check
+	userGroup := router.Group("/")
+	userGroup.Use(middleware.RequireAuthSameUser)
+
+	userGroup.PUT("/users/:id", userController.UserUpdate)
+	userGroup.PUT("/users/:id/upload-profile-photo", userController.UserUploadProfilePhoto)
+	userGroup.DELETE("/users/:id", userController.UserDelete)
 
 	router.Run()
 }

@@ -3,19 +3,22 @@ package responses
 import (
 	"github.com/abelherl/go-test/models"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 type PostResponse struct {
-	ID    uint   `json:"id"`
-	Title string `json:"title"`
-	Body  string `json:"body"`
+	ID          uint           `json:"id"`
+	Title       string         `json:"title"`
+	Body        string         `json:"body"`
+	Attachments pq.StringArray `gorm:"type:text[]" json:"attachments"`
 }
 
 func NewPostResponse(p models.Post) PostResponse {
 	return PostResponse{
-		ID:    p.ID,
-		Title: p.Title,
-		Body:  p.Body,
+		ID:          p.ID,
+		Title:       p.Title,
+		Body:        p.Body,
+		Attachments: p.Attachments,
 	}
 }
 

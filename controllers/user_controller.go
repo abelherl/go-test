@@ -92,7 +92,10 @@ func (uc *UserController) UserUpdate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, responses.UserToJSON(user))
+	var updatedUser models.User
+	uc.DB.First(&updatedUser, id)
+
+	c.JSON(200, responses.UserToJSON(updatedUser))
 }
 
 func (uc *UserController) UserDelete(c *gin.Context) {
