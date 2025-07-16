@@ -111,7 +111,7 @@ func (uc *UserController) UserDelete(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "User deleted successfully"})
 }
 
-func (uc *UserController) UploadProfilePhoto(c *gin.Context) {
+func (uc *UserController) UserUploadProfilePhoto(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(400, gin.H{"error": "Invalid user ID"})
