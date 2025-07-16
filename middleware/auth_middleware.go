@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"strconv"
+
 	"github.com/abelherl/go-test/helpers"
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +34,7 @@ func RequireAuthSameUser(c *gin.Context) {
 	}
 
 	requestedUserID := c.Param("id")
-	if requestedUserID == "" || requestedUserID != userID {
+	if requestedUserID == "" || requestedUserID != strconv.Itoa(int(userID)) {
 		c.JSON(403, gin.H{"error": "No access"})
 		c.Abort()
 		return

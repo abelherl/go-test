@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -37,23 +36,23 @@ func GetAuthHeader(c *gin.Context) string {
 	return strings.TrimPrefix(authHeader, "Bearer ")
 }
 
-func GetUserIDFromAuth(c *gin.Context) (string, error) {
+func GetUserIDFromAuth(c *gin.Context) (uint, error) {
 	tokenStr := GetAuthHeader(c)
 	if tokenStr == "" {
-		return "", jwt.NewValidationError("No token provided", jwt.ValidationErrorUnverifiable)
+		return 0, jwt.NewValidationError("No token provided", jwt.ValidationErrorUnverifiable)
 	}
 
 	token, err := ValidateJWT(tokenStr)
 	if err != nil || !token.Valid {
-		return "", jwt.NewValidationError("Invalid token", jwt.ValidationErrorMalformed)
+		return 0, jwt.NewValidationError("Invalid token", jwt.ValidationErrorMalformed)
 	}
 
 	userID, ok := token.Claims.(jwt.MapClaims)["sub"].(float64)
 	if !ok {
-		return "", jwt.NewValidationError("Invalid token claims", jwt.ValidationErrorClaimsInvalid)
+		return 0, jwt.NewValidationError("Invalid token claims", jwt.ValidationErrorClaimsInvalid)
 	}
 
-	return strconv.Itoa(int(userID)), nil
+	return uint(userID), nil
 }
 
 func HashPassword(password string) (string, error) {

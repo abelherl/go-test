@@ -30,7 +30,7 @@ type PostsUpdate struct {
 	TechNextGen  pq.StringArray `json:"techNextGen"`
 }
 
-func NewPostFromCreateRequest(request PostsCreate) (models.Post, error) {
+func NewPostFromCreateRequest(request PostsCreate, id uint) (models.Post, error) {
 	if !helpers.ValidateTags(request.Tags) ||
 		!helpers.ValidateTechnologies(request.TechFrontEnd) ||
 		!helpers.ValidateTechnologies(request.TechBackEnd) ||
@@ -43,6 +43,7 @@ func NewPostFromCreateRequest(request PostsCreate) (models.Post, error) {
 		Title:        request.Title,
 		Body:         request.Body,
 		Tags:         request.Tags,
+		AuthorID:     id,
 		TechFrontEnd: request.TechFrontEnd,
 		TechBackEnd:  request.TechBackEnd,
 		TechInfra:    request.TechInfra,
@@ -50,7 +51,7 @@ func NewPostFromCreateRequest(request PostsCreate) (models.Post, error) {
 	}, nil
 }
 
-func NewPostFromUpdateRequest(request PostsUpdate, id string) (models.Post, error) {
+func NewPostFromUpdateRequest(request PostsUpdate, id string, userID uint) (models.Post, error) {
 	if !helpers.ValidateTags(request.Tags) ||
 		!helpers.ValidateTechnologies(request.TechFrontEnd) ||
 		!helpers.ValidateTechnologies(request.TechBackEnd) ||
@@ -70,6 +71,7 @@ func NewPostFromUpdateRequest(request PostsUpdate, id string) (models.Post, erro
 		},
 		Title:        request.Title,
 		Body:         request.Body,
+		AuthorID:     userID,
 		Tags:         request.Tags,
 		TechFrontEnd: request.TechFrontEnd,
 		TechBackEnd:  request.TechBackEnd,

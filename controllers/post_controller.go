@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/abelherl/go-test/helpers"
 	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/requests"
@@ -27,8 +29,13 @@ func (pc PostController) PostsCreate(c *gin.Context) {
 
 	c.Bind(&body)
 
-	post, err := requests.NewPostFromCreateRequest(body)
+	userID, err := helpers.GetUserIDFromAuth(c)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to get user ID"})
+		return
+	}
 
+	post, err := requests.NewPostFromCreateRequest(body, userID)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Failed to parse request"})
 		return
@@ -59,7 +66,7 @@ func (pc PostController) PostsIndex(c *gin.Context) {
 	var total int64
 
 	// Initialize the query
-	query := pc.DB.Model(&models.Post{})
+	query := pc.DB.Model(&models.Post{}).Where("author_id IS NOT NULL")
 
 	// Apply search filter if provided
 	if search != "" {
@@ -114,23 +121,18 @@ func (pc PostController) PostsUpdate(c *gin.Context) {
 
 	var post models.Post
 	result := pc.DB.First(&post, id)
-
 	if result.Error != nil {
 		c.JSON(401, gin.H{"error": "Failed to find post"})
 		return
 	}
 
-	// userID, err := helpers.GetUserIDFromAuth(c)
+	isSameAuthor := checkSameAuthor(c, post.AuthorID)
+	if !isSameAuthor {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No access to this resource"})
+		return
+	}
 
-	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to parse request"})
-	// }
-
-	// if userID != post.AuthorID {
-
-	// }
-
-	newPost, err := requests.NewPostFromUpdateRequest(body, id)
+	newPost, err := requests.NewPostFromUpdateRequest(body, id, post.AuthorID)
 
 	if err != nil {
 		if err.Error() == "invalid tags or technologies" {
@@ -151,10 +153,21 @@ func (pc PostController) PostsUpdate(c *gin.Context) {
 }
 
 func (pc PostController) PostsDelete(c *gin.Context) {
-	// Get the post ID from the URL parameters
 	id := c.Param("id")
 
-	// Delete the post from the database
+	var post models.Post
+	resultFirst := pc.DB.First(&post, id)
+	if resultFirst.Error != nil {
+		c.JSON(401, gin.H{"error": "Failed to find post"})
+		return
+	}
+
+	isSameAuthor := checkSameAuthor(c, post.AuthorID)
+	if !isSameAuthor {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No access to this resource"})
+		return
+	}
+
 	result := pc.DB.Delete(&models.Post{}, id)
 
 	if result.Error != nil {
@@ -162,7 +175,6 @@ func (pc PostController) PostsDelete(c *gin.Context) {
 		return
 	}
 
-	// Return a success message as a JSON response
 	c.JSON(200, gin.H{
 		"message": "Post deleted successfully",
 	})
@@ -223,4 +235,12 @@ func (pc PostController) getIndexParams(c *gin.Context) (page int, limit int, se
 	}
 
 	return
+}
+
+func checkSameAuthor(c *gin.Context, authorID uint) bool {
+	userID, err := helpers.GetUserIDFromAuth(c)
+	if err != nil {
+		return false
+	}
+	return userID == authorID
 }
