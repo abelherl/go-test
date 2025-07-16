@@ -6,6 +6,7 @@ import (
 
 	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
+	"github.com/abelherl/go-test/requests"
 	"github.com/abelherl/go-test/responses"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -20,24 +21,23 @@ func NewPostController(db *gorm.DB) *PostController {
 }
 
 func (pc PostController) PostsCreate(c *gin.Context) {
-	// Get data from request body
-	var body struct {
-		Body  string `json:"body"`
-		Title string `json:"title"`
-	}
+	var body requests.PostsCreate
 
 	c.Bind(&body)
 
-	// Create a new post in the database
-	post := models.Post{Title: body.Title, Body: body.Body}
-	result := pc.DB.Create(&post)
+	post, err := requests.NewPostFromCreateRequest(body)
 
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to parse request"})
+		return
+	}
+
+	result := pc.DB.Create(&post)
 	if result.Error != nil {
 		c.JSON(400, gin.H{"error": "Failed to create post"})
 		return
 	}
 
-	// Return the created post as a JSON response
 	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
 }
 
@@ -105,35 +105,36 @@ func (pc PostController) PostsShow(c *gin.Context) {
 }
 
 func (pc PostController) PostsUpdate(c *gin.Context) {
-	// Get the post ID from the URL parameters
 	id := c.Param("id")
-
-	// Get data from request body
-	var body struct {
-		Body  string `json:"body"`
-		Title string `json:"title"`
-	}
+	var body requests.PostsUpdate
 
 	c.Bind(&body)
 
-	// Update the post in the database
 	var post models.Post
 	result := pc.DB.First(&post, id)
 
 	if result.Error != nil {
-		c.Status(404)
+		c.JSON(401, gin.H{"error": "Failed to find post"})
 		return
 	}
 
-	post.Title = body.Title
-	post.Body = body.Body
+	newPost, err := requests.NewPostFromUpdateRequest(body, id)
 
-	pc.DB.Save(&post)
+	if err != nil {
+		if err.Error() == "invalid tags or technologies" {
+			c.JSON(400, gin.H{"error": "Invalid tags or techs"})
+			return
+		}
+
+		c.JSON(400, gin.H{"error": "Failed to parse request"})
+		return
+	}
+
+	pc.DB.Save(&newPost)
 
 	var updatedPost models.Post
 	pc.DB.First(&updatedPost, id)
 
-	// Return the updated post as a JSON response
 	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(updatedPost)))
 }
 
