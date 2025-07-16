@@ -6,11 +6,12 @@ import (
 )
 
 type UserResponse struct {
-	ID        uint   `json:"id"`
-	FirstName string `json:"firstName" gorm:"column:first_name"`
-	LastName  string `json:"lastName"  gorm:"column:last_name"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
+	ID              uint   `json:"id"`
+	FirstName       string `json:"firstName" gorm:"column:first_name"`
+	LastName        string `json:"lastName"  gorm:"column:last_name"`
+	ProfilePhotoURL string `json:"profilePhotoURL" gorm:"column:profile_photo_url"`
+	Email           string `json:"email"`
+	Role            string `json:"role"`
 }
 
 func NewUserResponse(u models.User) UserResponse {
@@ -18,11 +19,12 @@ func NewUserResponse(u models.User) UserResponse {
 		u.Role = "user"
 	}
 	return UserResponse{
-		ID:        u.ID,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Email:     u.Email,
-		Role:      u.Role,
+		ID:              u.ID,
+		FirstName:       u.FirstName,
+		LastName:        u.LastName,
+		ProfilePhotoURL: u.ProfilePhotoURL,
+		Email:           u.Email,
+		Role:            u.Role,
 	}
 }
 

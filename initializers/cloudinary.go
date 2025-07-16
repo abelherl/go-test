@@ -7,11 +7,10 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api"
-	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-var Cloudinary *cloudinary.Cloudinary
+var instance *cloudinary.Cloudinary
 
 func InitCloudinary() bool {
 	cld, err := cloudinary.NewFromParams(
@@ -20,63 +19,32 @@ func InitCloudinary() bool {
 		os.Getenv("CLOUDINARY_API_SECRET"),
 	)
 
-	Cloudinary = cld
+	instance = cld
 
 	if err != nil {
 		fmt.Println("Error initializing Cloudinary:", err)
 		return false
 	}
 
-	Cloudinary.Config.URL.Secure = true
+	instance.Config.URL.Secure = true
 	ctx := context.Background()
 
-	return Cloudinary != nil && ctx != nil
+	return instance != nil && ctx != nil
 }
 
-func UploadImage(cld *cloudinary.Cloudinary, ctx context.Context) {
-	// Upload the image.
-	// Set the asset's public ID and allow overwriting the asset with new versions
-	resp, err := cld.Upload.Upload(ctx, "https://cloudinary-devs.github.io/cld-docs-assets/assets/images/butterfly.jpeg", uploader.UploadParams{
-		PublicID:       "quickstart_butterfly",
+func UploadImage(ctx context.Context, file any, publicID string, folder string) (string, error) {
+	uploadParams := uploader.UploadParams{
+		PublicID:       publicID,
 		UniqueFilename: api.Bool(false),
-		Overwrite:      api.Bool(true)})
+		Overwrite:      api.Bool(true),
+		Transformation: "w_250,h_250,c_fill,g_face",
+		Folder:         folder,
+	}
+
+	resp, err := instance.Upload.Upload(ctx, file, uploadParams)
 	if err != nil {
-		fmt.Println("error")
+		return "", fmt.Errorf("cloudinary upload failed: %w", err)
 	}
 
-	// Log the delivery URL
-	fmt.Println("****2. Upload an image****\nDelivery URL:", resp.SecureURL)
-}
-
-func GetAssetInfo(cld *cloudinary.Cloudinary, ctx context.Context) {
-	// Get and use details of the image
-	resp, err := cld.Admin.Asset(ctx, admin.AssetParams{PublicID: "quickstart_butterfly"})
-	if err != nil {
-		fmt.Println("error")
-	}
-	fmt.Println("****3. Get and use details of the image****\nDetailed response:\n", resp)
-
-	// Assign tags to the uploaded image based on its width. Save the response to the update in the variable 'update_resp'.
-	if resp.Width > 900 {
-		update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
-			PublicID: "quickstart_butterfly",
-			Tags:     []string{"large"}})
-		if err != nil {
-			fmt.Println("error")
-		} else {
-			// Log the new tag to the console.
-			fmt.Println("New tag: ", update_resp.Tags)
-		}
-	} else {
-		update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
-			PublicID: "quickstart_butterfly",
-			Tags:     []string{"small"}})
-		if err != nil {
-			fmt.Println("error")
-		} else {
-			// Log the new tag to the console.
-			fmt.Println("New tag: ", update_resp.Tags)
-		}
-	}
-
+	return resp.SecureURL, nil
 }

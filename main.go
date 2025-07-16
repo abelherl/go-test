@@ -49,6 +49,7 @@ func main() {
 		protected.GET("/users", userController.UserIndex)
 		protected.GET("/users/:id", userController.UserShow)
 		protected.PUT("/users/:id", userController.UserUpdate)
+		protected.PUT("/users/:id/upload-profile-photo", userController.UploadProfilePhoto)
 		protected.DELETE("/users/:id", userController.UserDelete)
 	}
 

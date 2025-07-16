@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/abelherl/go-test/initializers"
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/requests"
 	"github.com/abelherl/go-test/responses"
@@ -117,4 +118,39 @@ func (uc *UserController) UserDelete(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"message": "User deleted successfully"})
+}
+
+func (uc *UserController) UploadProfilePhoto(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(400, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Failed to get file"})
+		return
+	}
+
+	ctx := c.Request.Context()
+	publicID := "user_" + id
+
+	url, err := initializers.UploadImage(ctx, file, publicID, "profile_photos")
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to upload image"})
+		return
+	}
+
+	var user models.User
+	result := uc.DB.First(&user, id)
+	if result.Error != nil {
+		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.ProfilePhotoURL = url
+	uc.DB.Save(&user)
+
+	c.JSON(200, responses.UserToJSON(user))
 }
