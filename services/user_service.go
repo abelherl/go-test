@@ -18,3 +18,9 @@ func (us *UserService) GetUserByEmail(email string) (models.User, error) {
 	result := us.DB.Where("email = ?", email).First(&user)
 	return user, result.Error
 }
+
+func (us *UserService) GetUserByID(id uint) models.User {
+	var user models.User
+	us.DB.First(&user, id)
+	return user
+}

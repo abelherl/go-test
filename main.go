@@ -21,7 +21,7 @@ func main() {
 	userService := services.NewUserService(db)
 
 	authController := controllers.NewAuthController(userService)
-	postController := controllers.NewPostController(db)
+	postController := controllers.NewPostController(db, userService)
 	userController := controllers.NewUserController(db)
 
 	// Set up Gin router
@@ -41,9 +41,6 @@ func main() {
 	authGroup.POST("/posts", postController.PostsCreate)
 	authGroup.GET("/posts", postController.PostsIndex)
 	authGroup.GET("/posts/:id", postController.PostsShow)
-	authGroup.PUT("/posts/:id", postController.PostsUpdate)
-	authGroup.PUT("/posts/:id/upload-attachments", postController.PostsUploadAttachments)
-	authGroup.DELETE("/posts/:id", postController.PostsDelete)
 
 	authGroup.GET("/users", userController.UserIndex)
 	authGroup.GET("/users/:id", userController.UserShow)
@@ -51,6 +48,10 @@ func main() {
 	// Routes with same user authentication check
 	userGroup := router.Group("/")
 	userGroup.Use(middleware.RequireAuthSameUser)
+
+	userGroup.PUT("/posts/:id", postController.PostsUpdate)
+	userGroup.PUT("/posts/:id/upload-attachments", postController.PostsUploadAttachments)
+	userGroup.DELETE("/posts/:id", postController.PostsDelete)
 
 	userGroup.PUT("/users/:id", userController.UserUpdate)
 	userGroup.PUT("/users/:id/upload-profile-photo", userController.UserUploadProfilePhoto)

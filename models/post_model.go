@@ -9,6 +9,7 @@ type Post struct {
 	gorm.Model
 	Title        string
 	Body         string
+	AuthorID     uint
 	Tags         pq.StringArray `json:"tags" gorm:"type:text[]"`
 	TechFrontEnd pq.StringArray `json:"techFrontEnd" gorm:"type:text[]"`
 	TechBackEnd  pq.StringArray `json:"techBackEnd" gorm:"type:text[]"`

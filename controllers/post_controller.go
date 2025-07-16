@@ -8,16 +8,18 @@ import (
 	"github.com/abelherl/go-test/models"
 	"github.com/abelherl/go-test/requests"
 	"github.com/abelherl/go-test/responses"
+	"github.com/abelherl/go-test/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type PostController struct {
-	DB *gorm.DB
+	DB      *gorm.DB
+	Service *services.UserService
 }
 
-func NewPostController(db *gorm.DB) *PostController {
-	return &PostController{DB: db}
+func NewPostController(db *gorm.DB, service *services.UserService) *PostController {
+	return &PostController{DB: db, Service: service}
 }
 
 func (pc PostController) PostsCreate(c *gin.Context) {
@@ -38,7 +40,7 @@ func (pc PostController) PostsCreate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(pc.Service, post)))
 }
 
 func (pc PostController) PostsIndex(c *gin.Context) {
@@ -75,7 +77,7 @@ func (pc PostController) PostsIndex(c *gin.Context) {
 		Offset(offset).
 		Find(&posts)
 
-	postResponses := responses.NewPostResponseList(posts)
+	postResponses := responses.NewPostResponseList(pc.Service, posts)
 
 	c.JSON(200, gin.H{
 		"data":       postResponses,
@@ -101,7 +103,7 @@ func (pc PostController) PostsShow(c *gin.Context) {
 	}
 
 	// Return the post as a JSON response
-	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(pc.Service, post)))
 }
 
 func (pc PostController) PostsUpdate(c *gin.Context) {
@@ -117,6 +119,16 @@ func (pc PostController) PostsUpdate(c *gin.Context) {
 		c.JSON(401, gin.H{"error": "Failed to find post"})
 		return
 	}
+
+	// userID, err := helpers.GetUserIDFromAuth(c)
+
+	// if err != nil {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to parse request"})
+	// }
+
+	// if userID != post.AuthorID {
+
+	// }
 
 	newPost, err := requests.NewPostFromUpdateRequest(body, id)
 
@@ -135,7 +147,7 @@ func (pc PostController) PostsUpdate(c *gin.Context) {
 	var updatedPost models.Post
 	pc.DB.First(&updatedPost, id)
 
-	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(updatedPost)))
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(pc.Service, updatedPost)))
 }
 
 func (pc PostController) PostsDelete(c *gin.Context) {
@@ -194,7 +206,7 @@ func (pc PostController) PostsUploadAttachments(c *gin.Context) {
 
 	pc.DB.Save(&post)
 
-	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(post)))
+	c.JSON(200, responses.PostToJSON(responses.NewPostResponse(pc.Service, post)))
 }
 
 func (pc PostController) getIndexParams(c *gin.Context) (page int, limit int, search string) {
