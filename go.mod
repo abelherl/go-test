@@ -5,6 +5,13 @@ go 1.24.4
 require github.com/golang-jwt/jwt v3.2.2+incompatible
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
+)
+
+require (
 	github.com/bytedance/sonic v1.13.3 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudinary/cloudinary-go/v2 v2.10.1 // indirect

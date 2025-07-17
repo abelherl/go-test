@@ -5,6 +5,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserServiceInterface interface {
+	GetUserByEmail(email string) (*models.User, error)
+	GetUserByID(id uint) *models.User
+}
+
 type UserService struct {
 	DB *gorm.DB
 }
@@ -13,14 +18,16 @@ func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{DB: db}
 }
 
-func (us *UserService) GetUserByEmail(email string) (models.User, error) {
+var _ UserServiceInterface = (*UserService)(nil)
+
+func (us *UserService) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 	result := us.DB.Where("email = ?", email).First(&user)
-	return user, result.Error
+	return &user, result.Error
 }
 
-func (us *UserService) GetUserByID(id uint) models.User {
+func (us *UserService) GetUserByID(id uint) *models.User {
 	var user models.User
 	us.DB.First(&user, id)
-	return user
+	return &user
 }
