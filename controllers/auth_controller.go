@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/abelherl/go-test/helpers"
 	"github.com/abelherl/go-test/services"
 	"github.com/gin-gonic/gin"
@@ -21,23 +23,26 @@ func (ac *AuthController) AuthLogin(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	user, err := ac.UserService.GetUserByEmail(body.Email)
-	passErr := !helpers.CheckPassword(body.Password, user.Password)
+	if err != nil || user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
 
-	if err != nil || passErr {
-		c.JSON(401, gin.H{"error": "Invalid credentials"})
+	if !helpers.CheckPassword(body.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	token, err := helpers.GenerateJWT(user.ID)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Could not generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return
 	}
 
-	c.JSON(200, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
