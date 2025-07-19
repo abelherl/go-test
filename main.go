@@ -33,6 +33,7 @@ func main() {
 	// Public routes
 	router.POST("/auth/login", authController.AuthLogin)
 	router.POST("/users", userController.UserCreate)
+	router.GET("/ping", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 
 	// Routes with general authentication check
 	authGroup := router.Group("/")
